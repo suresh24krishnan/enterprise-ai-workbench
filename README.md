@@ -10,201 +10,261 @@ license: mit
 
 # Enterprise AI Workbench
 
-A production-shaped enterprise AI platform demonstrating governed, explainable, human-in-the-loop AI workflows. Claims processing is the first business domain.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Hugging%20Face%20Spaces-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/spaces/sureshkrishnan/enterprise-ai-workbench)
+[![GitHub](https://img.shields.io/badge/GitHub-enterprise--ai--workbench-181717?logo=github)](https://github.com/suresh24krishnan/enterprise-ai-workbench)
+[![Phase](https://img.shields.io/badge/Phase-1.1%20Deployed-22c55e)](https://github.com/suresh24krishnan/enterprise-ai-workbench)
+[![Architecture](https://img.shields.io/badge/Architecture-Hexagonal-6366f1)](docs/PHASE_1_COMPLETION_SUMMARY.md)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
-## What This Is
+**A production-shaped enterprise AI platform for governed, explainable, human-in-the-loop AI workflows.**
 
-This is not an AI chatbot. It is an enterprise architecture that routes tasks to appropriate AI models, enforces governance policies, maintains an immutable audit trail, and requires human approval before any write operation.
+> **Live Demo →** [huggingface.co/spaces/sureshkrishnan/enterprise-ai-workbench](https://huggingface.co/spaces/sureshkrishnan/enterprise-ai-workbench)
+> **Source →** [github.com/suresh24krishnan/enterprise-ai-workbench](https://github.com/suresh24krishnan/enterprise-ai-workbench)
 
-## Architecture Overview
+---
+
+## The Business Problem
+
+Enterprise AI adoption in regulated industries stalls not because the models are inadequate, but because organizations cannot answer three questions from compliance, legal, and operations:
+
+1. **Who authorised this AI action?** — No actor-level attribution on AI decisions.
+2. **Why did the AI produce this output?** — No evidence trail, no confidence scoring, no explainability.
+3. **What stopped the AI from acting on bad data?** — No governance layer between model output and system writes.
+
+Without answers to these questions, AI stays in pilot. The Enterprise AI Workbench exists to answer all three — in production architecture, not in prototype code.
+
+---
+
+## Solution Overview
+
+The Workbench is a **reference implementation of governed AI for claims processing** — the first business domain in what is designed to be a multi-domain enterprise AI platform.
+
+It demonstrates that enterprise AI can be:
+
+- **Governed by default** — every AI action evaluated against a policy engine before execution
+- **Fully explainable** — every output grounded in cited, scored evidence sources
+- **Human-in-the-loop** — no AI output reaches a system of record without explicit human approval
+- **Immutably audited** — every significant event recorded with actor type, status, latency, and confidence
+- **Architecture-stable** — Phase 1 mock adapters are swapped for real integrations in Phase 2 with zero business logic changes
+
+---
+
+## Live Demo
+
+**[→ Launch the Enterprise AI Workbench](https://huggingface.co/spaces/sureshkrishnan/enterprise-ai-workbench)**
+
+Walk the full claims AI workflow:
+
+| Screen | What It Shows |
+|--------|--------------|
+| Executive Dashboard | AI operations KPIs, model utilization, governance distribution, platform health |
+| Claims Workbench | Claim list → claim detail → governed AI actions |
+| AI Claim Summary | Evidence-grounded, confidence-scored summary with RAG citations |
+| Governed Assistant | Context-scoped conversational AI with per-turn policy evaluation |
+| Evidence & Explainability | Ranked evidence sources backing every AI output |
+| Draft Note Generation | AI-authored adjuster note held as DRAFT until human approval |
+| Human Approval | Structured checklist with mandatory reviewer commitment |
+| Audit Trail | Eleven-event immutable timeline with actor, status, latency, confidence |
+
+---
+
+## Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌──────────────────────────────────┐
-│   Frontend  │────▶│   Backend   │────▶│  Services (Router, Governance,   │
-│  (React/TS) │     │  (FastAPI)  │     │  Audit, RAG, Orchestration)      │
-└─────────────┘     └─────────────┘     └──────────────────────────────────┘
-                                                       │
-                          ┌────────────────────────────┤
-                          ▼                            ▼
-                   ┌─────────────┐           ┌─────────────────┐
-                   │   Domains   │           │    Adapters     │
-                   │  (Claims)   │           │ (ClaimCenter,   │
-                   └─────────────┘           │  Identity,      │
-                                             │  Models, etc.)  │
-                                             └─────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                        Browser (React + TypeScript)                  │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │ HTTPS
+┌───────────────────────────────▼──────────────────────────────────────┐
+│                    FastAPI Backend (Python 3.11)                      │
+│                                                                      │
+│  Routes ──▶ Services ──▶ Governance Engine ──▶ Model Router          │
+│                │                                     │               │
+│                ▼                                     ▼               │
+│         Audit Store                           AI Model Provider      │
+│                │                                     │               │
+│                └──────────────────┬──────────────────┘               │
+│                                   ▼                                  │
+│                        Ports & Adapters Layer                        │
+│             (IClaimRepository, IIdentityProvider, ...)               │
+└──────────────────────────────────────────────────────────────────────┘
+                                   │
+          ┌────────────────────────┼────────────────────────┐
+          ▼                        ▼                        ▼
+   ClaimCenter API          Identity Provider         Model Gateway
+   (Phase 2: Sandbox)       (Phase 2: SSO)        (Phase 2: Enterprise)
+   (Phase 1: Mock)          (Phase 1: Mock)        (Phase 1: Mock)
 ```
 
-## Design Philosophy
+**Design rule:** Business logic never depends on infrastructure. Every external system is accessed through a typed interface. Swapping `MockClaimRepository` for `ClaimCenterRepository` in `dependencies.py` is the only change required to move from Phase 1 to Phase 2.
 
-**The MVP is not a throwaway prototype. It is a production-shaped prototype.**
+---
 
-- Architecture is built once and remains stable across phases
-- Implementations are replaced, not rewritten
-- All external systems are accessed through adapters (ports & adapters)
-- Business logic never depends on infrastructure
+## End-to-End Governed Workflow
 
-## Evolution Phases
+```
+Adjuster opens claim
+        │
+        ▼
+Identity Provider ──▶ authenticates user, establishes session
+        │
+        ▼
+Claim Repository ──▶ loads claim data, evidence, history
+        │
+        ▼
+Model Router ──▶ selects model (task type, risk level, cost)
+        │
+        ▼
+Governance Engine ──▶ evaluates policy set
+        │
+        ├──▶ ALLOW  ──▶ AI executes, result returned
+        ├──▶ DENY   ──▶ action blocked, reason recorded
+        └──▶ ESCALATE ──▶ routed to human reviewer
+                │
+                ▼
+        AI generates output (summary / note / analysis)
+                │
+                ▼
+        Evidence retrieved and ranked (RAG)
+                │
+                ▼
+        Audit Store ──▶ event recorded (immutable, append-only)
+                │
+                ▼
+        Human Approval ──▶ adjuster reviews, commits, or rejects
+                │
+                ▼
+        Write-back (Phase 2: ClaimCenter API)
+                │
+                ▼
+        Audit Store ──▶ write-back event recorded
+```
 
-| Phase | Auth | ClaimCenter | Storage | Models |
-|-------|------|-------------|---------|--------|
-| 1 — Local MVP | Mock | Mock | SQLite | Mock |
-| 2 — Dev/Sandbox | Enterprise SSO | Sandbox API | PostgreSQL | Enterprise gateway |
-| 3 — Production | Enterprise SSO | Production API | Enterprise DB | Production gateway |
+---
 
-## Core Principles
+## Governance Controls
 
-- Clean / Hexagonal Architecture
-- Interface-first design (depend on abstractions, never implementations)
-- Governance by default — every AI interaction is governed
-- Human authority over AI — no write bypasses human approval
-- Immutable audit trail — every significant event is recorded
+| Control | Mechanism | Phase 1 |
+|---------|-----------|---------|
+| Policy evaluation | ALLOW / DENY / ESCALATE per request | Mock policy engine — `mvp_policy_set v1.0` |
+| Context isolation | AI scoped to authorized claim evidence only | Enforced in conversation service |
+| Human authority | No write reaches a system of record without human approval | Approval gate before all write operations |
+| Audit logging | Append-only event log with actor type, status, latency, confidence | In-memory audit store |
+| Evidence grounding | Every AI output grounded in cited, ranked sources | Mock RAG with realistic evidence |
+| Model routing | Task-appropriate model selected before execution | Mock router (GPT-4.1-mini / Claude Sonnet / Gemini Flash) |
+
+---
+
+## Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, TypeScript (strict), Vite 5, Tailwind CSS v3, React Router v6 |
+| Backend | Python 3.11, FastAPI, Pydantic v2, pydantic-settings |
+| Architecture | Hexagonal (Ports & Adapters), Repository Pattern, Dependency Injection |
+| Container | Docker multi-stage, nginx reverse proxy, supervisord, Python 3.11-slim |
+| Deployment | Hugging Face Docker Spaces, port 7860 |
+| Phase 2 target | Azure OpenAI, Azure Cognitive Search, PostgreSQL, enterprise SSO |
+
+---
+
+## Phase Roadmap
+
+| Version | Name | Key Changes |
+|---------|------|-------------|
+| `v1.0.0-phase1` | Reference Implementation | Full governed workflow, mock adapters, immutable audit trail |
+| `v1.1.0-phase2` | Sandbox Integration | Real identity provider, ClaimCenter sandbox API, PostgreSQL, enterprise RAG |
+| `v1.2.0` | AI Layer | Azure OpenAI integration, real model routing, policy engine, immutable audit ledger |
+| `v2.0.0` | Enterprise Platform | Multi-domain support, production ClaimCenter, compliance reporting, SLA monitoring |
+
+See [`docs/RELEASE_STRATEGY.md`](docs/RELEASE_STRATEGY.md) for the full release approach.
+
+---
+
+## Quick Start
+
+### Run locally with Docker
+
+```bash
+# Clone
+git clone https://github.com/suresh24krishnan/enterprise-ai-workbench.git
+cd enterprise-ai-workbench
+
+# Build and run
+docker-compose up --build
+
+# Open
+open http://localhost:7860
+```
+
+### Run backend + frontend separately (development)
+
+```bash
+# Backend
+cd backend
+pip install -r requirements.txt
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+---
 
 ## Directory Structure
 
 ```
 enterprise-ai-workbench/
-├── frontend/          # React + Vite + TypeScript UI
-├── backend/           # FastAPI application, routes, and DI wiring
-├── services/          # Domain services (model routing, governance, audit, RAG, orchestration)
-├── adapters/          # Infrastructure adapters (ports & adapters pattern)
-├── domains/           # Business domain logic (Claims, future domains)
-├── shared/            # Schemas, prompts, policies, shared components
-├── mock-data/         # Local mock data for Phase 1 development
-└── docs/              # Architecture decisions, API contracts, runbooks
+├── frontend/          # React + Vite + TypeScript SPA
+│   ├── src/
+│   │   ├── pages/     # ExecutiveDashboard, ClaimsWorkbench, AuditTimeline, ...
+│   │   ├── components/# Layout, shared UI components
+│   │   ├── lib/       # api.ts — single API client
+│   │   └── types/     # TypeScript interfaces (snake_case, matches backend)
+│   └── nginx.conf     # nginx reverse proxy config (Docker deployment)
+├── backend/           # FastAPI application, routes, DI wiring
+│   └── app/
+│       ├── api/       # Route handlers (claims, conversation, session, health)
+│       ├── config.py  # pydantic-settings configuration
+│       └── repositories/ # MockClaimRepository (Phase 1)
+├── services/          # Domain services (model router, governance, audit, RAG, orchestration)
+├── adapters/          # Infrastructure adapters (ports & adapters interfaces)
+├── domains/           # Business domain logic (Claims)
+├── shared/            # Schemas, prompts, policies
+├── mock-data/         # Phase 1 mock data
+├── docs/              # Architecture, release strategy, versioning, leadership docs
+├── Dockerfile         # Multi-stage production build
+├── docker-compose.yml # Single-container deployment
+├── supervisord.conf   # Process manager (nginx + uvicorn)
+└── start.sh           # Container entrypoint
 ```
 
-## Quick Start
-
-```bash
-# Copy environment template
-cp .env.example .env
-
-# Start all services
-docker-compose up
-```
-
-## Governed AI Workflow
-
-```
-User Request
-    │
-    ▼
-Model Router ──▶ selects model based on task type, risk, cost
-    │
-    ▼
-Governance Engine ──▶ ALLOW / DENY / ESCALATE
-    │
-    ▼ (if ALLOW or human approves ESCALATE)
-AI Model ──▶ generates response
-    │
-    ▼
-Audit Store ──▶ immutable record of every decision
-    │
-    ▼
-Human Approval (for write operations)
-    │
-    ▼
-Write Operation
-```
+---
 
 ## Key Interfaces
 
 | Interface | Responsibility |
 |-----------|---------------|
-| `IClaimRepository` | Read/write claims |
-| `IClaimNoteWriter` | Write notes back to ClaimCenter |
-| `IIdentityProvider` | Authenticate and authorize users |
-| `IKnowledgeProvider` | Retrieve relevant knowledge (RAG) |
-| `IModelProvider` | Execute AI model calls |
+| `IClaimRepository` | Read/write claims — swap mock for ClaimCenter in Phase 2 |
+| `IClaimNoteWriter` | Write notes to ClaimCenter — mock in Phase 1 |
+| `IIdentityProvider` | Authenticate and authorize users — mock in Phase 1 |
+| `IKnowledgeProvider` | Retrieve evidence (RAG) — mock in Phase 1 |
+| `IModelProvider` | Execute AI model calls — mock in Phase 1 |
 | `IModelRouter` | Select the right model for a task |
-| `IGovernanceEngine` | Evaluate governance policies |
+| `IGovernanceEngine` | Evaluate policy before every AI action |
 | `IAuditStore` | Record audit events immutably |
-| `IConversationService` | Manage conversation state |
 
 ---
 
-## Phase 1 MVP Status
+## Documentation
 
-| Field | Value |
-|-------|-------|
-| **Status** | Complete — Frozen |
-| **Version** | 1.0 MVP |
-| **Architecture** | Enterprise AI Workbench |
-| **Domain** | Claims (Reference Implementation) |
-
-### Capabilities
-
-- AI Claim Summary — governed, evidence-grounded, confidence-scored
-- Governed Assistant — context-scoped conversational AI with per-turn governance
-- Evidence & Explainability — ranked source citations backing every AI output
-- Draft Note Generation — AI-authored adjuster notes held as DRAFT until human approval
-- Human Approval — structured checklist, mandatory reviewer commitment before write-back
-- Immutable Audit Trail — append-only eleven-event timeline with actor, status, and metadata
-- Executive Dashboard — AI operations KPIs, model utilization, governance distribution, platform health
-
-### Governance Controls
-
-- Policy Evaluation — every AI action evaluated against `mvp_policy_set v1.0` (ALLOW / DENY / ESCALATE)
-- Context Isolation — AI assistant scoped to authorized claim evidence; out-of-scope queries refused
-- Human-in-the-loop — no AI output reaches a system of record without explicit adjuster approval
-- Audit Logging — every significant event recorded with actor type, status, latency, and confidence
-- Evidence Grounding — all AI outputs grounded in retrieved, cited, scored evidence sources
-
-### Current Limitations
-
-Mock integrations only. All external systems (ClaimCenter, identity provider, vector store, model gateway, audit ledger) are replaced by in-memory mock adapters. Production systems are intentionally deferred to Phase 2.
-
-### Next Phase
-
-Phase 2: Sandbox integrations — identity provider, ClaimCenter sandbox API, enterprise RAG pipeline, policy engine, immutable audit store, and live model routing. See [`docs/PHASE_1_COMPLETION_SUMMARY.md`](docs/PHASE_1_COMPLETION_SUMMARY.md) for the full Phase 2 roadmap.
-
----
-
-## Docker Deployment (Phase 1.1)
-
-Single-container build: nginx on port 7860 serves the React frontend and proxies `/api/*` to uvicorn on internal port 8000.
-
-### Build and run locally
-
-```bash
-# Build
-docker build -t enterprise-ai-workbench .
-
-# Run (default port 7860)
-docker run -p 7860:7860 enterprise-ai-workbench
-
-# Run with docker-compose
-docker-compose up --build
-```
-
-Open `http://localhost:7860` in your browser.
-
-### Hugging Face Docker Spaces
-
-Push this repository to a Hugging Face Space with **Docker** as the SDK. The `PORT` environment variable is injected automatically by HF Spaces; the container reads it and configures nginx accordingly.
-
-Required Space metadata in `README.md` (add to the top of the file when creating the Space):
-
-```yaml
----
-title: Enterprise AI Workbench
-emoji: 🛡️
-colorFrom: blue
-colorTo: violet
-sdk: docker
-pinned: false
----
-```
-
-### Architecture inside the container
-
-```
-Browser → nginx :7860
-             ├── /          → serve frontend/dist/ (React SPA)
-             └── /api/*     → proxy → uvicorn :8000 (FastAPI)
-```
-
-- **nginx** handles all browser traffic on `$PORT` (default 7860)
-- **uvicorn** runs on `127.0.0.1:8000` (internal only, not exposed)
-- **supervisord** manages both processes with auto-restart
-- The frontend JS bundle is patched at build time so API calls use relative paths through the nginx proxy
+| Document | Purpose |
+|----------|---------|
+| [`docs/PHASE_1_COMPLETION_SUMMARY.md`](docs/PHASE_1_COMPLETION_SUMMARY.md) | Full Phase 1 capability summary, architecture decisions, demo script |
+| [`docs/RELEASE_STRATEGY.md`](docs/RELEASE_STRATEGY.md) | One-repo strategy, version path, HF Space deployment model |
+| [`docs/VERSIONING_GUIDE.md`](docs/VERSIONING_GUIDE.md) | Tag naming, release naming, recommended commands |
+| [`docs/LEADERSHIP_ONE_PAGER.md`](docs/LEADERSHIP_ONE_PAGER.md) | Executive summary for leadership review |
+| [`docs/RELEASE_NOTES_v1.0.md`](docs/RELEASE_NOTES_v1.0.md) | Phase 1 release notes |
+| [`docs/MVP_SCOPE.md`](docs/MVP_SCOPE.md) | Phase 1 scope boundaries |
