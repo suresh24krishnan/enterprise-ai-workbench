@@ -1,3 +1,13 @@
+---
+title: Enterprise AI Workbench
+emoji: 🛡️
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+license: mit
+---
+
 # Enterprise AI Workbench
 
 A production-shaped enterprise AI platform demonstrating governed, explainable, human-in-the-loop AI workflows. Claims processing is the first business domain.
@@ -147,3 +157,54 @@ Mock integrations only. All external systems (ClaimCenter, identity provider, ve
 ### Next Phase
 
 Phase 2: Sandbox integrations — identity provider, ClaimCenter sandbox API, enterprise RAG pipeline, policy engine, immutable audit store, and live model routing. See [`docs/PHASE_1_COMPLETION_SUMMARY.md`](docs/PHASE_1_COMPLETION_SUMMARY.md) for the full Phase 2 roadmap.
+
+---
+
+## Docker Deployment (Phase 1.1)
+
+Single-container build: nginx on port 7860 serves the React frontend and proxies `/api/*` to uvicorn on internal port 8000.
+
+### Build and run locally
+
+```bash
+# Build
+docker build -t enterprise-ai-workbench .
+
+# Run (default port 7860)
+docker run -p 7860:7860 enterprise-ai-workbench
+
+# Run with docker-compose
+docker-compose up --build
+```
+
+Open `http://localhost:7860` in your browser.
+
+### Hugging Face Docker Spaces
+
+Push this repository to a Hugging Face Space with **Docker** as the SDK. The `PORT` environment variable is injected automatically by HF Spaces; the container reads it and configures nginx accordingly.
+
+Required Space metadata in `README.md` (add to the top of the file when creating the Space):
+
+```yaml
+---
+title: Enterprise AI Workbench
+emoji: 🛡️
+colorFrom: blue
+colorTo: violet
+sdk: docker
+pinned: false
+---
+```
+
+### Architecture inside the container
+
+```
+Browser → nginx :7860
+             ├── /          → serve frontend/dist/ (React SPA)
+             └── /api/*     → proxy → uvicorn :8000 (FastAPI)
+```
+
+- **nginx** handles all browser traffic on `$PORT` (default 7860)
+- **uvicorn** runs on `127.0.0.1:8000` (internal only, not exposed)
+- **supervisord** manages both processes with auto-restart
+- The frontend JS bundle is patched at build time so API calls use relative paths through the nginx proxy

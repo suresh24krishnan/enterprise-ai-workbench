@@ -1,0 +1,55 @@
+# Node
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+*.tsbuildinfo
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Development tools
+.claude/
+.vscode/
+.idea/
+
+# Environment files (never bake secrets into the image)
+.env
+.env.local
+.env.*.local
+
+# Git metadata
+.git/
+.gitignore
+
+# Docker override
+docker-compose.override.yml
+
+# Secrets
+*.pem
+*.key
+*.cert
+*.p12
+secrets/
+
+# Mock data local overrides
+mock-data/*.local.json
