@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+pydantic>=2.0
+pydantic-settings>=2.0
+python-dotenv
+python-jose[cryptography]

@@ -1,0 +1,85 @@
+version: "3.9"
+
+# =============================================================================
+# Enterprise AI Workbench — Docker Compose (Phase 1: Local MVP)
+#
+# Services defined here use mock adapters and local storage.
+# In Phase 2+, replace adapter environment variables and add enterprise
+# infrastructure services (PostgreSQL, Redis, etc.) as needed.
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Backend — FastAPI application
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: workbench-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - ./services:/app/services
+      - ./adapters:/app/adapters
+      - ./domains:/app/domains
+      - ./shared:/app/shared
+      - ./mock-data:/app/mock-data
+      - workbench-db:/app/data
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-local}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/workbench.db}
+      - IDENTITY_PROVIDER=${IDENTITY_PROVIDER:-mock}
+      - CLAIMCENTER_ADAPTER=${CLAIMCENTER_ADAPTER:-mock}
+      - MODEL_PROVIDER=${MODEL_PROVIDER:-mock}
+      - AUDIT_STORE=${AUDIT_STORE:-sqlite}
+      - KNOWLEDGE_PROVIDER=${KNOWLEDGE_PROVIDER:-local}
+      - GOVERNANCE_STRICT_MODE=${GOVERNANCE_STRICT_MODE:-true}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-secret-change-in-production}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - JWT_EXPIRY_MINUTES=${JWT_EXPIRY_MINUTES:-480}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173}
+      - BACKEND_LOG_LEVEL=${BACKEND_LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Frontend — React + Vite application
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: workbench-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  workbench-db:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  default:
+    name: workbench-network
