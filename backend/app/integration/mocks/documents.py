@@ -283,7 +283,15 @@ class MockDocumentProvider:
     ) -> GetDocumentsResult:
         apply_simulation(self._sim)
         if claim_id != _CLAIM_ID:
-            return GetDocumentsResult(status=ToolResultStatus.NOT_FOUND)
+            return GetDocumentsResult(
+                status=ToolResultStatus.NOT_FOUND,
+                error=ToolError(
+                    code="NOT_FOUND",
+                    message=f"No documents found for claim '{claim_id}'.",
+                    source_system=SourceSystem.DOCUMENTS,
+                    retryable=False,
+                ),
+            )
         docs = list(_DOCUMENTS)
         if document_type_filter:
             docs = [d for d in docs if d.document_type in document_type_filter]
@@ -311,7 +319,15 @@ class MockDocumentProvider:
     ) -> SearchDocumentsResult:
         apply_simulation(self._sim)
         if request.claim_id != _CLAIM_ID:
-            return SearchDocumentsResult(status=ToolResultStatus.NOT_FOUND)
+            return SearchDocumentsResult(
+                status=ToolResultStatus.NOT_FOUND,
+                error=ToolError(
+                    code="NOT_FOUND",
+                    message=f"No documents found for claim '{request.claim_id}'.",
+                    source_system=SourceSystem.DOCUMENTS,
+                    retryable=False,
+                ),
+            )
         docs = list(_DOCUMENTS)
         if request.document_type_filter:
             docs = [d for d in docs if d.document_type in request.document_type_filter]
@@ -371,7 +387,15 @@ class MockDocumentProvider:
     ) -> GetDocumentEvidenceResult:
         apply_simulation(self._sim)
         if claim_id != _CLAIM_ID:
-            return GetDocumentEvidenceResult(status=ToolResultStatus.NOT_FOUND)
+            return GetDocumentEvidenceResult(
+                status=ToolResultStatus.NOT_FOUND,
+                error=ToolError(
+                    code="NOT_FOUND",
+                    message=f"No documents found for claim '{claim_id}'.",
+                    source_system=SourceSystem.DOCUMENTS,
+                    retryable=False,
+                ),
+            )
         evidence = []
         for doc_id in document_ids:
             doc = _DOC_INDEX.get(doc_id)

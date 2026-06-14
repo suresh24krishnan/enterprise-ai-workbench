@@ -250,7 +250,15 @@ class MockEmailProvider:
     ) -> GetClaimCorrespondenceResult:
         apply_simulation(self._sim)
         if claim_id != _CLAIM_ID:
-            return GetClaimCorrespondenceResult(status=ToolResultStatus.NOT_FOUND)
+            return GetClaimCorrespondenceResult(
+                status=ToolResultStatus.NOT_FOUND,
+                error=ToolError(
+                    code="NOT_FOUND",
+                    message=f"No correspondence found for claim '{claim_id}'.",
+                    source_system=SourceSystem.EMAIL,
+                    retryable=False,
+                ),
+            )
         summaries = _SUMMARIES
         if direction_filter:
             summaries = [s for s in summaries if s.direction == direction_filter]
