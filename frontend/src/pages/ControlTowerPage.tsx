@@ -8,6 +8,7 @@ import {
   Clock,
   Database,
   Eye,
+  FlaskConical,
   Lock,
   RefreshCw,
   Server,
@@ -76,6 +77,21 @@ interface CTSummary {
   provider_modes: string[]
   store_capacity: number
   store_used: number
+}
+
+interface EvalSummary {
+  total_runs: number
+  pass_count: number
+  fail_count: number
+  pass_rate: number
+  average_score: number
+  regression_count: number
+  last_run_at: string | null
+  last_run_id: string | null
+  store_used: number
+  store_capacity: number
+  writes_enabled: boolean
+  lab_safe: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -493,11 +509,70 @@ function RunDetailPanel({ run, onClose }: { run: RunDetail; onClose: () => void 
   )
 }
 
+// ── Evaluation Summary Card ───────────────────────────────────────────────
+
+function EvaluationSummaryCard({ eval: ev }: { eval: EvalSummary }) {
+  const passRate  = Math.round(ev.pass_rate * 100)
+  const scoreColor = ev.average_score >= 90
+    ? 'text-emerald-600' : ev.average_score >= 80
+    ? 'text-blue-600' : 'text-amber-600'
+
+  function fmtTime(iso: string | null) {
+    if (!iso) return 'Never'
+    try { return new Date(iso).toLocaleTimeString() } catch { return iso }
+  }
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-3">
+        <FlaskConical size={13} className="text-violet-600" />
+        <h2 className="text-sm font-semibold text-slate-800">Latest Evaluation</h2>
+        <span className="ml-auto text-[9px] font-bold bg-violet-50 text-violet-700 border border-violet-200 px-1.5 py-0.5 rounded uppercase tracking-wide">
+          Sprint 7
+        </span>
+      </div>
+      {ev.total_runs === 0 ? (
+        <p className="text-[11px] text-slate-400 py-2">No evaluations run yet. POST to <code className="font-mono bg-slate-100 px-1 rounded">/api/integration/evaluation/run</code></p>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">Overall Score</span>
+            <span className={`text-sm font-bold font-mono ${scoreColor}`}>{ev.average_score.toFixed(1)}<span className="text-[10px] text-slate-400 font-normal">/100</span></span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">Pass Rate</span>
+            <span className="text-xs font-bold text-slate-800">{passRate}%
+              <span className="text-[10px] text-slate-400 font-normal ml-1">({ev.pass_count}/{ev.total_runs})</span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">Regressions</span>
+            <span className={`text-xs font-bold ${ev.regression_count > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+              {ev.regression_count}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-500">Last Run</span>
+            <span className="text-[11px] text-slate-600">{fmtTime(ev.last_run_at)}</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-slate-100 mt-1">
+            <div
+              className={`h-1.5 rounded-full ${passRate >= 80 ? 'bg-emerald-400' : 'bg-amber-400'}`}
+              style={{ width: `${passRate}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default function ControlTowerPage() {
   const [summary, setSummary] = useState<CTSummary | null>(null)
   const [runs, setRuns] = useState<RunSummary[]>([])
+  const [evalSummary, setEvalSummary] = useState<EvalSummary | null>(null)
   const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -507,14 +582,16 @@ export default function ControlTowerPage() {
     setLoading(true)
     setError(null)
     try {
-      const [summaryRes, runsRes] = await Promise.all([
+      const [summaryRes, runsRes, evalRes] = await Promise.all([
         fetch(`${API}/summary`),
         fetch(`${API}/runs`),
+        fetch('/api/integration/evaluation/summary'),
       ])
       if (!summaryRes.ok || !runsRes.ok) throw new Error('API error')
       const [s, r] = await Promise.all([summaryRes.json(), runsRes.json()])
       setSummary(s)
       setRuns(r)
+      if (evalRes.ok) setEvalSummary(await evalRes.json())
     } catch {
       setError('Could not connect to Control Tower API. Run a supervisor request first.')
     } finally {
@@ -729,6 +806,8 @@ export default function ControlTowerPage() {
                 </div>
               </Card>
             )}
+
+            {evalSummary && <EvaluationSummaryCard eval={evalSummary} />}
 
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <div className="flex items-start gap-2.5">
