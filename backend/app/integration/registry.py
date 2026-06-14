@@ -144,8 +144,11 @@ class ProviderRegistry:
             raise IntegrationConfigError(
                 f"Provider '{name}' is configured for REAL mode but no real "
                 f"adapter is registered. "
-                f"Register a real factory with registry.register_real('{name}', ...) "
-                f"or change PROVIDER_{name.upper()} to 'mock'."
+                f"Real provider adapters are not implemented in Phase 2A. "
+                f"Production enterprise integration requires explicit adapter "
+                f"registration and governance approval (see ADR-002, ADR-004). "
+                f"To use mock mode: set PROVIDER_{name.upper()}=mock "
+                f"(or remove the variable — MOCK is the default)."
             )
         return self._real_factories[name]()
 
