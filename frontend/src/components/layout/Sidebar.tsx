@@ -1,19 +1,21 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard,
-  FolderOpen,
-  MessageSquare,
-  FileText,
+  Activity,
   CheckSquare,
   ClipboardList,
+  FileText,
+  FolderOpen,
+  LayoutDashboard,
+  MessageSquare,
   Shield,
   User,
   LogOut,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',         icon: LayoutDashboard, to: '/dashboard', matchPrefix: '/dashboard' },
-  { label: 'Claims Workbench',  icon: FolderOpen,      to: '/home',      matchPrefix: '/claims' },
+  { label: 'Dashboard',         icon: LayoutDashboard, to: '/dashboard',      matchPrefix: '/dashboard' },
+  { label: 'Claims Workbench',  icon: FolderOpen,      to: '/home',           matchPrefix: '/claims' },
+  { label: 'Control Tower',     icon: Activity,        to: '/control-tower',  matchPrefix: '/control-tower' },
   { label: 'Conversations',     icon: MessageSquare,   to: null },
   { label: 'Draft Notes',       icon: FileText,        to: null },
   { label: 'Approvals',         icon: CheckSquare,     to: null },

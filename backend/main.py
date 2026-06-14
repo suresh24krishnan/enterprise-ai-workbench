@@ -15,6 +15,7 @@ from backend.app.api.routes_claims import router as claims_router
 from backend.app.api.routes_conversation import router as conversation_router
 from backend.app.api.routes_integration import router as integration_router
 from backend.app.api.routes_supervisor import router as supervisor_router
+from backend.app.api.routes_control_tower import router as control_tower_router
 from backend.app.integration.bootstrap import get_registry
 
 
@@ -55,6 +56,7 @@ def create_app() -> FastAPI:
     app.include_router(conversation_router)
     app.include_router(integration_router)
     app.include_router(supervisor_router)
+    app.include_router(control_tower_router)
 
     # Warm the registry singleton at startup so the first request does not
     # pay the construction cost and so misconfiguration fails fast on launch.

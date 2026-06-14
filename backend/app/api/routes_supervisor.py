@@ -23,6 +23,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from backend.app.integration.bootstrap import get_registry
+from backend.app.integration.control_tower import service as ct_service
 from backend.app.integration.registry import IntegrationConfigError
 from backend.app.integration.supervisor.models import SupervisorRequest, SupervisorResponse
 from backend.app.integration.supervisor.supervisor import run_supervisor
@@ -54,7 +55,14 @@ def supervisor_run(request: SupervisorRequest) -> SupervisorResponse:
     """
     registry = get_registry()
     try:
-        return run_supervisor(request, registry)
+        response = run_supervisor(request, registry)
+        # Record into Control Tower trace store (metadata only — no body content)
+        try:
+            ct_service.record_supervisor_response(request.claim_id, response)
+        except Exception as ct_exc:
+            # Never let observability failure break the supervisor response
+            logger.warning("Control Tower: record failed — %s", ct_exc)
+        return response
     except IntegrationConfigError as exc:
         logger.warning("Supervisor endpoint: governance violation — %s", exc)
         raise HTTPException(
