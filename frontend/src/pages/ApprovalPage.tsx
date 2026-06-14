@@ -25,13 +25,13 @@ function StatusBanner({ status }: { status: ApprovalStatus }) {
       bg: 'bg-amber-50 border-amber-200',
       text: 'text-amber-700',
       icon: <ClipboardCheck size={15} />,
-      label: 'Pending Review — This note requires human approval before write-back to ClaimCenter.',
+      label: 'Pending Review — Human approval required. No ClaimCenter update will occur in Phase 2A.',
     },
     APPROVED: {
       bg: 'bg-emerald-50 border-emerald-200',
       text: 'text-emerald-700',
       icon: <CheckCircle size={15} />,
-      label: 'Approved — This draft note has been approved and is ready for write-back.',
+      label: 'Human approval completed. Draft is eligible for governed write-back only after Phase 2B enterprise write controls are enabled.',
     },
     REJECTED: {
       bg: 'bg-red-50 border-red-200',
@@ -282,7 +282,7 @@ export default function ApprovalPage() {
                   onSelect={setDecision}
                   icon={<ThumbsUp size={14} />}
                   label="Approve"
-                  description="Note is accurate, policy-compliant, and ready for write-back."
+                  description="Note is accurate, policy-compliant, and eligible for governed write-back after Phase 2B controls are enabled."
                   color="border-emerald-400 bg-emerald-50 text-emerald-700"
                 />
                 <DecisionOption
@@ -291,7 +291,7 @@ export default function ApprovalPage() {
                   onSelect={setDecision}
                   icon={<ThumbsDown size={14} />}
                   label="Reject"
-                  description="Note contains errors or is not suitable for write-back."
+                  description="Note contains errors or is not suitable for write-back review."
                   color="border-red-400 bg-red-50 text-red-700"
                 />
                 <DecisionOption
@@ -330,7 +330,7 @@ export default function ApprovalPage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
                 <CheckCircle size={15} />
-                {submitting ? 'Submitting…' : 'Approve and Commit'}
+                {submitting ? 'Submitting…' : 'Record Approval'}
               </button>
               <button
                 onClick={() => void handleSubmit()}

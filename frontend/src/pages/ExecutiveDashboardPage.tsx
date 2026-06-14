@@ -305,7 +305,7 @@ export default function ExecutiveDashboardPage() {
                   <p className="text-xs font-semibold text-blue-800">AI Governance Policy</p>
                   <p className="text-[11px] text-blue-700 mt-1 leading-relaxed">
                     Every AI action is evaluated against <span className="font-semibold">mvp_policy_set v1.0</span> before execution.
-                    Human approval is required for all write-back operations.
+                    Human approval is required. Governed write-back is pending Phase 2B enterprise controls.
                   </p>
                 </div>
               </div>

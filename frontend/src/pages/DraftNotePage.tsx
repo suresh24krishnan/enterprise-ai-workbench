@@ -106,7 +106,7 @@ export default function DraftNotePage() {
 
   function handleApprove() {
     // Phase 2: POST to approval endpoint
-    alert('Approval workflow is implemented in Step 6.')
+    alert('Approval successfully recorded. No system-of-record update has been performed. Current runtime is read-only. Governed write-back will be enabled only after Phase 2B identity, audit, idempotency, and policy gates are satisfied.')
   }
 
   function handleRegenerate() {
@@ -205,7 +205,7 @@ export default function DraftNotePage() {
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
                   <Shield size={11} className="text-emerald-500" />
-                  Governance: ALLOW · Requires approval before write-back
+                  Governance: ALLOW · Approval required · No write-back in Phase 2A
                 </div>
               </div>
 

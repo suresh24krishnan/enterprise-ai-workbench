@@ -24,7 +24,7 @@ export default function App() {
         <Route path="claims/:claimId/assistant" element={<AssistantPage />} />
         <Route path="claims/:claimId/draft-note" element={<DraftNotePage />} />
         <Route path="claims/:claimId/approval" element={<ApprovalPage />} />
-        <Route path="claims/:claimId/write-progress" element={<PlaceholderPage title="Governed Write" description="Validated note write-back to ClaimCenter after approval." step={7} />} />
+        <Route path="claims/:claimId/write-progress" element={<PlaceholderPage title="Governed Write" description="Human approval recorded. Governed write-back to ClaimCenter pending Phase 2B controls." step={7} />} />
         <Route path="claims/:claimId/write-completed" element={<PlaceholderPage title="Write Completed" description="Confirmation and final audit record of the completed write." step={7} />} />
         <Route path="claims/:claimId/audit" element={<AuditTimelinePage />} />
         <Route path="control-tower" element={<ControlTowerPage />} />

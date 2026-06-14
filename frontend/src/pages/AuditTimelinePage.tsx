@@ -96,7 +96,7 @@ const EVENT_LABEL: Record<string, string> = {
   'ai.conversation.turn_completed': 'Assistant Response',
   'ai.note.drafted':               'Draft Note Created',
   'human.approval.granted':        'Human Approved',
-  'claimcenter.note.written':      'Ready for Write-back',
+  'claimcenter.note.written':      'Awaiting Governed Write Enablement',
 }
 
 // ── Chip ──────────────────────────────────────────────────────────────────
@@ -310,7 +310,7 @@ export default function AuditTimelinePage() {
     { label: 'Governance check (assistant)', done: events.some(e => e.event_type === 'governance.evaluated' && e.task_type === 'claim_assistant') },
     { label: 'Draft note created',         done: hasEvent('ai.note.drafted') },
     { label: 'Human approval granted',     done: hasEvent('human.approval.granted') },
-    { label: 'Ready for write-back',        done: hasEvent('claimcenter.note.written') },
+    { label: 'Awaiting Governed Write Enablement', done: hasEvent('claimcenter.note.written') },
   ]
 
   function toggleExpand(id: string) {
